@@ -14,10 +14,29 @@ namespace Wawalang
         public int label = 0;
         public int steps = 0;
 
+        /// <summary>
+        /// The state of the interpreter. <seealso cref="InterpreterState"/>
+        /// </summary>
         public InterpreterState State { get; private set; }
-        public bool strict = false;
 
+        /// <summary>
+        /// <para>
+        /// If set to false (default), interpreter will error if it failed to print an item as UTF-8.
+        /// </para>
+        /// <para>
+        /// If set to true, interpreter will error if stack is empty when an operation is performed or when an invalid instruction is entered in addition to what happens for false.
+        /// </para>
+        /// </summary>
+        public bool Strict = false;
+
+        /// <summary>
+        /// Contains the output of the program as anything is printed
+        /// </summary>
         public string Output { get; private set; }
+
+        /// <summary>
+        /// Contains an error message in the event the state becomes <see cref="InterpreterState.Error"/>
+        /// </summary>
         public string Error { get; private set; }
 
         public Interpreter(string program)
@@ -26,6 +45,9 @@ namespace Wawalang
             Reset();
         }
 
+        /// <summary>
+        /// Resets all variables in the interpreter.
+        /// </summary>
         public void Reset()
         {
             index = 0;
@@ -37,6 +59,9 @@ namespace Wawalang
             Error = "";
         }
 
+        /// <summary>
+        /// Advances the program forward one instruction if the state is <see cref="InterpreterState.Ready"/>
+        /// </summary>
         public void Step()
         {
             if (State == InterpreterState.Ready && index < program.Length)
@@ -110,7 +135,7 @@ namespace Wawalang
                                 // Basic operations
                                 if (stack.Count == 0)
                                 {
-                                    if (strict)
+                                    if (Strict)
                                     {
                                         State = InterpreterState.Error;
                                         Error = "Stack empty!";
@@ -129,7 +154,7 @@ namespace Wawalang
                                 // Number operations
                                 if (stack.Count < 2)
                                 {
-                                    if (strict)
+                                    if (Strict)
                                     {
                                         State = InterpreterState.Error;
                                         Error = "Not enough items in stack!";
@@ -153,7 +178,7 @@ namespace Wawalang
                                     // Pop top of stack
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -169,7 +194,7 @@ namespace Wawalang
                                     // Pop top of stack and push to other
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -185,7 +210,7 @@ namespace Wawalang
                                     // Swap top two items in stack
                                     if (stack.Count < 2)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Not enough items in stack!";
@@ -203,7 +228,7 @@ namespace Wawalang
                                     // Duplicate top of stack
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -223,7 +248,7 @@ namespace Wawalang
                                     // Pop stack and go to label if 0
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -239,7 +264,7 @@ namespace Wawalang
                                     // Pop stack and go to label if not 0
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -255,7 +280,7 @@ namespace Wawalang
                                     // Pop stacks and go to label if current stack > other stack
                                     if (stack.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Stack empty!";
@@ -263,7 +288,7 @@ namespace Wawalang
                                     }
                                     else if (other.Count == 0)
                                     {
-                                        if (strict)
+                                        if (Strict)
                                         {
                                             State = InterpreterState.Error;
                                             Error = "Other stack empty!";
@@ -281,7 +306,7 @@ namespace Wawalang
                                 }
                             }
                         }
-                        else if (strict)
+                        else if (Strict)
                         {
                             State = InterpreterState.Error;
                             Error = "Expected symbol but found end of program!";
@@ -297,6 +322,10 @@ namespace Wawalang
 
         }
 
+        /// <summary>
+        /// Advances the program forward as many instructions as it can until its state is no longer <see cref="InterpreterState.Ready"/> or a certain amount of steps has been reached.
+        /// </summary>
+        /// <param name="maxSteps">The maximum number of steps to run.</param>
         public void StepUntilStop(int maxSteps)
         {
             int i = 0;
@@ -307,8 +336,16 @@ namespace Wawalang
             }
         }
 
+        /// <summary>
+        /// Advances the program forward as many instructions as it can until its state is no longer <see cref="InterpreterState.Ready"/>.
+        /// </summary>
         public void StepUntil() => StepUntilStop(int.MaxValue);
 
+        /// <summary>
+        /// Takes in an input and pushes it to the stack if and only if it is awaiting input (input instruction was just passed in).
+        /// </summary>
+        /// <param name="value">The byte to push</param>
+        /// <exception cref="InvalidOperationException">Throws this if the method was called while the interpreter was not awaiting input.</exception>
         public void TakeInput(byte value)
         {
             if (State == InterpreterState.AwaitingInput)
@@ -322,11 +359,29 @@ namespace Wawalang
             }
         }
 
+        /// <summary>
+        /// The possible states of the interpreter
+        /// </summary>
         public enum InterpreterState
         {
+            /// <summary>
+            /// The program is ready to run the next instruction
+            /// </summary>
             Ready,
+
+            /// <summary>
+            /// The program requires user input to continue
+            /// </summary>
             AwaitingInput,
+
+            /// <summary>
+            /// The program has encountered an error and will not run
+            /// </summary>
             Error,
+
+            /// <summary>
+            /// The program finished running successfully
+            /// </summary>
             Finished
         }
     }
