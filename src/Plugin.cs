@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Logging;
 using System.Security.Permissions;
 
 // Allows access to private members
@@ -6,17 +7,19 @@ using System.Security.Permissions;
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 #pragma warning restore CS0618
 
-namespace TestMod;
+namespace Wawalang;
 
-[BepInPlugin("com.author.testmod", "Test Mod", "0.1.0")]
+[BepInPlugin("alduris.wawalang", "WAWAlang", "1.0.0")]
 sealed class Plugin : BaseUnityPlugin
 {
     bool init;
+    public static new ManualLogSource Logger;
 
     public void OnEnable()
     {
         // Add hooks here
         On.RainWorld.OnModsInit += OnModsInit;
+        Logger = base.Logger;
     }
 
     private void OnModsInit(On.RainWorld.orig_OnModsInit orig, RainWorld self)
@@ -28,6 +31,6 @@ sealed class Plugin : BaseUnityPlugin
         init = true;
 
         // Initialize assets, your mod config, and anything that uses RainWorld here
-        Logger.LogDebug("Hello world!");
+        MachineConnector.SetRegisteredOI("WAWAlang", new Remix());
     }
 }
