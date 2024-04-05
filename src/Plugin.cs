@@ -32,5 +32,10 @@ sealed class Plugin : BaseUnityPlugin
 
         // Initialize assets, your mod config, and anything that uses RainWorld here
         MachineConnector.SetRegisteredOI("WAWAlang", new Remix());
+
+        if (ModManager.ActiveMods.Exists(x => x.id == "slime-cubed.devconsole"))
+        {
+            ConsoleInterface.Register();
+        }
     }
 }
